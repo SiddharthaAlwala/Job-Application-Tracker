@@ -18,21 +18,35 @@ public class JwtUtils {
     @Value("${jwt.expirationMs}")
     private Long jwtExpirationMs; // Token Expiration time in milliseconds
 
-    private SecretKey secretKey; // HS512- compatible secret key
-
-    @PostConstruct
-    private void initSecretKey() {
-        // Decode Base64 secret key or generate from a secure random string
-        this.secretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
+
 
     public String generateToken(String username) {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(secretKey, SignatureAlgorithm.HS512)
+                .signWith(getSigningKey(),SignatureAlgorithm.HS512)
                 .compact();
+    }
+
+    public boolean validateToken(String token){
+        try{
+            Jwts.parser().setSigningKey(getSigningKey()).parseClaimsJws(token);
+            return true;
+        }
+        catch (Exception e){
+            return false;
+        }
+    }
+    public String getUsernameFromToken(String token){
+        return Jwts.parser()
+                .setSigningKey(getSigningKey())
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
     }
 
 }

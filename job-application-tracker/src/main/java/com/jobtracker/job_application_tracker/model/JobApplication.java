@@ -4,20 +4,25 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class JobApplication {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String companyName;
     private String jobTitle;
-    private String status;
-    private LocalDate dateOfApplication;
-    private LocalDate deadLine;
+    private String status; // e.g., "Applied", "Interviewed", "Rejected", "Accepted"
     private String notes;
+    private String resumeLink; // Link to the applicant's resume
 
     public Long getId() {
         return id;
@@ -55,23 +60,9 @@ public class JobApplication {
         return this;
     }
 
-    public LocalDate getDateOfApplication() {
-        return dateOfApplication;
-    }
 
-    public JobApplication setDateOfApplication(LocalDate dateOfApplication) {
-        this.dateOfApplication = dateOfApplication;
-        return this;
-    }
 
-    public LocalDate getDeadLine() {
-        return deadLine;
-    }
 
-    public JobApplication setDeadLine(LocalDate deadLine) {
-        this.deadLine = deadLine;
-        return this;
-    }
 
     public String getNotes() {
         return notes;

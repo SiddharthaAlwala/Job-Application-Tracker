@@ -2,36 +2,43 @@ package com.jobtracker.job_application_tracker.controller;
 
 import com.jobtracker.job_application_tracker.model.JobApplication;
 import com.jobtracker.job_application_tracker.repository.JobApplicationRepository;
+import com.jobtracker.job_application_tracker.service.JobApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/applications")
-@CrossOrigin(origins = "http://localhost:3000")
 public class JobApplicationController {
     @Autowired
-    private JobApplicationRepository jobApplicationRepository;
+    private JobApplicationService jobApplicationService;
+
+
     @GetMapping
+
     public List<JobApplication> getAllApplications(){
-        return jobApplicationRepository.findAll();
+        return jobApplicationService.getApplication();
 
     }
     @PostMapping
+
     public JobApplication createApplication(@RequestBody JobApplication jobApplication) {
-        return jobApplicationRepository.save(jobApplication);
+        return jobApplicationService.createApplication(jobApplication);
     }
 
     @PutMapping("/{id}")
+
     public JobApplication updateApplication(@PathVariable Long id, @RequestBody JobApplication jobApplication) {
-        jobApplication.setId(id);
-        return jobApplicationRepository.save(jobApplication);
+
+        return jobApplicationService.updateApplication(id, jobApplication);
     }
 
     @DeleteMapping("/{id}")
+
     public void deleteApplication(@PathVariable Long id) {
-        jobApplicationRepository.deleteById(id);
+        jobApplicationService.deleteApplication(id);
     }
 
 }

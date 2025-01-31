@@ -7,6 +7,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -15,6 +17,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -46,7 +49,7 @@ public class AuthController {
 
     @CrossOrigin(origins = "http://localhost:3000")
     @PostMapping("/login")
-    public String login(@RequestBody Users users){
+    public ResponseEntity<?> login(@RequestBody Users users){
         try {
             // Authenticate the user
             Authentication authentication = authenticationManager.authenticate(
@@ -55,14 +58,17 @@ public class AuthController {
 
             // If authentication is successful, generate a JWT token
             if (authentication.isAuthenticated()) {
-                return jwtUtils.generateToken(users.getUsername()); // Replace this with actual JWT generation logic
+                String token = jwtUtils.generateToken(users.getUsername());
+                return ResponseEntity.ok().body(Map.of("token", token));
             }
         } catch (AuthenticationException e) {
             // If authentication fails, return an error response
-            return "Invalid username or password";
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalied username or password");
+
+
         }
 
-        return "Invalid username or password";
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
     }
 
 
