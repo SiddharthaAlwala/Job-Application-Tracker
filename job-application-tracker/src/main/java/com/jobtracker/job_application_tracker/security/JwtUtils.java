@@ -8,42 +8,56 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
+import java.util.prefs.BackingStoreException;
 
 @Component
 public class JwtUtils {
-    @Value("${jwt.secret}")
-    private String jwtSecret; // Secret key from configuration (Base64 encoded)
 
-    @Value("${jwt.expirationMs}")
-    private Long jwtExpirationMs; // Token Expiration time in milliseconds
+    private final Key secretKey; // Secret key from configuration (Base64 encoded)
 
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    @Value("${jwt.expiration}")
+    private Long expirationTime; // Token Expiration time in milliseconds
+
+    public JwtUtils(@Value("${jwt.secret}") String secret) {
+        byte[] keyBytes = Base64.getDecoder().decode(secret);
+        this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-
+    private Key decodeSecretKey(String secret) {
+        try {
+            byte[] keyBytes = Base64.getDecoder().decode(secret);
+            return Keys.hmacShaKeyFor(keyBytes);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid JWT secret key. Ensure it is Base64 encoded and at least 64 characters long.", e);
+        }
+    }
     public String generateToken(String username) {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(getSigningKey(),SignatureAlgorithm.HS512)
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
+                .signWith(secretKey,SignatureAlgorithm.HS512)
                 .compact();
     }
 
     public boolean validateToken(String token){
         try{
-            Jwts.parser().setSigningKey(getSigningKey()).parseClaimsJws(token);
+            Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
             return true;
         }
         catch (Exception e){
             return false;
         }
     }
+
+    // Extract username from token
     public String getUsernameFromToken(String token){
-        return Jwts.parser()
-                .setSigningKey(getSigningKey())
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();

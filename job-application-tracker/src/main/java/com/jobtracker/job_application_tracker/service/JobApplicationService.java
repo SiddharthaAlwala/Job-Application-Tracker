@@ -13,7 +13,7 @@ public class JobApplicationService {
     @Autowired
     private JobApplicationRepository jobApplicationRepository;
 
-    public List<JobApplication> getApplication(){
+    public List<JobApplication> getAllApplications(){
         return jobApplicationRepository.findAll();
     }
 

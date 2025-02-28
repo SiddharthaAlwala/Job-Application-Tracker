@@ -1,75 +1,116 @@
 package com.jobtracker.job_application_tracker.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
+@Table(name = "job_applications")
 @NoArgsConstructor
 @AllArgsConstructor
+
 public class JobApplication {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(nullable = false)
     private String companyName;
+
+    @Column(nullable = false)
     private String jobTitle;
+
+    @Column(nullable = false)
     private String status; // e.g., "Applied", "Interviewed", "Rejected", "Accepted"
-    private String notes;
-    private String resumeLink; // Link to the applicant's resume
+
+    @Column(length = 2000)
+    private String jobDescription;
+
+    private String resumeLink;
+
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate(){
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate(){
+        this.updatedAt = LocalDateTime.now();
+    }
 
     public Long getId() {
         return id;
     }
 
-    public JobApplication setId(Long id) {
+    public void setId(Long id) {
         this.id = id;
-        return this;
     }
 
     public String getCompanyName() {
         return companyName;
     }
 
-    public JobApplication setCompanyName(String companyName) {
+    public void setCompanyName(String companyName) {
         this.companyName = companyName;
-        return this;
     }
 
     public String getJobTitle() {
         return jobTitle;
     }
 
-    public JobApplication setJobTitle(String jobTitle) {
+    public void setJobTitle(String jobTitle) {
         this.jobTitle = jobTitle;
-        return this;
     }
 
     public String getStatus() {
         return status;
     }
 
-    public JobApplication setStatus(String status) {
+    public void setStatus(String status) {
         this.status = status;
-        return this;
     }
 
-
-
-
-
-    public String getNotes() {
-        return notes;
+    public String getJobDescription() {
+        return jobDescription;
     }
 
-    public JobApplication setNotes(String notes) {
-        this.notes = notes;
-        return this;
+    public void setJobDescription(String jobDescription) {
+        this.jobDescription = jobDescription;
+    }
+
+    public String getResumeLink() {
+        return resumeLink;
+    }
+
+    public void setResumeLink(String resumeLink) {
+        this.resumeLink = resumeLink;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }
+
+
+
+

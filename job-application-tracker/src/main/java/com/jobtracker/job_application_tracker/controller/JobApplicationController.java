@@ -1,9 +1,11 @@
 package com.jobtracker.job_application_tracker.controller;
 
 import com.jobtracker.job_application_tracker.model.JobApplication;
-import com.jobtracker.job_application_tracker.repository.JobApplicationRepository;
+
 import com.jobtracker.job_application_tracker.service.JobApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,9 +19,9 @@ public class JobApplicationController {
 
 
     @GetMapping
-
-    public List<JobApplication> getAllApplications(){
-        return jobApplicationService.getApplication();
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    public ResponseEntity<List<JobApplication>> getAllApplications(){
+        return ResponseEntity.ok(jobApplicationService.getAllApplications());
 
     }
     @PostMapping

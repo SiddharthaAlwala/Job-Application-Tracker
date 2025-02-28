@@ -1,10 +1,14 @@
 package com.jobtracker.job_application_tracker.controller;
 
+import com.jobtracker.job_application_tracker.dto.AuthRequest;
+import com.jobtracker.job_application_tracker.dto.AuthResponse;
+import com.jobtracker.job_application_tracker.dto.RegisterRequest;
 import com.jobtracker.job_application_tracker.model.Users;
-import com.jobtracker.job_application_tracker.repository.UserRepository;
+import com.jobtracker.job_application_tracker.repository.UsersRepository;
 import com.jobtracker.job_application_tracker.security.JwtUtils;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import com.jobtracker.job_application_tracker.service.CustomUserDetailsService;
+import jakarta.validation.Valid;
+import jakarta.websocket.OnMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -13,64 +17,68 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    @Autowired
-    private UserRepository userRepository;
+
     @Autowired
     private AuthenticationManager authenticationManager;
+
     @Autowired
     private JwtUtils jwtUtils;
 
-//    @Autowired
-//    public AuthController(AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtils jwtUtils) {
-//        this.authenticationManager = authenticationManager;
-//        this.userRepository = userRepository;
-//        this.jwtUtils = jwtUtils;
-//    }
+    @Autowired
+    private UsersRepository usersRepository;
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+    @Autowired
+    private CustomUserDetailsService userDetailsService;
 
-    @Value("${jwt.expirationMs}")
-    private Long jwtExpirationMs;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @PostMapping("/register")
-    public Users register(@RequestBody Users users){
-        return userRepository.save(users);
-    }
+    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest){
+        String username = registerRequest.getUsername();
+        String password = registerRequest.getPassword();
+        String role = registerRequest.getRole();
 
-    @CrossOrigin(origins = "http://localhost:3000")
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Users users){
-        try {
-            // Authenticate the user
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(users.getUsername(), users.getPassword())
-            );
-
-            // If authentication is successful, generate a JWT token
-            if (authentication.isAuthenticated()) {
-                String token = jwtUtils.generateToken(users.getUsername());
-                return ResponseEntity.ok().body(Map.of("token", token));
-            }
-        } catch (AuthenticationException e) {
-            // If authentication fails, return an error response
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalied username or password");
-
+        if(usersRepository.findByUsername(username).isPresent()){
+            return ResponseEntity.badRequest().body(Map.of("error", "Username already exists!"));
 
         }
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
+        // ✅ Hash the password before storing it
+        String hashedPassword = passwordEncoder.encode(password);
+
+        Users newUser = new Users();
+        newUser.setUsername(username);
+        newUser.setPassword(hashedPassword);
+        newUser.setRole(role);
+
+        usersRepository.save(newUser);
+
+        return ResponseEntity.ok("User registered successfully!");
     }
 
+//    @CrossOrigin(origins = "http://localhost:3000")
+    @PostMapping("/login")
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody AuthRequest authRequest) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
+        );
 
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = jwtUtils.generateToken(authRequest.getUsername());
+
+        return ResponseEntity.ok(new AuthResponse(jwt));
+    }
 
 }
