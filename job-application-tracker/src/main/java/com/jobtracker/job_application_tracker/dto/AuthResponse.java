@@ -1,6 +1,5 @@
 package com.jobtracker.job_application_tracker.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data

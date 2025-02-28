@@ -2,8 +2,6 @@ package com.jobtracker.job_application_tracker.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
