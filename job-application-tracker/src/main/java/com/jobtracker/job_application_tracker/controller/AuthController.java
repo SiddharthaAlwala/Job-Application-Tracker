@@ -2,7 +2,7 @@ package com.jobtracker.job_application_tracker.controller;
 
 import com.jobtracker.job_application_tracker.dto.AuthRequest;
 import com.jobtracker.job_application_tracker.dto.AuthResponse;
-import com.jobtracker.job_application_tracker.dto.RegisterRequest;
+import com.jobtracker.job_application_tracker.model.Role;
 import com.jobtracker.job_application_tracker.model.Users;
 import com.jobtracker.job_application_tracker.repository.UsersRepository;
 import com.jobtracker.job_application_tracker.security.JwtUtils;
@@ -10,16 +10,13 @@ import com.jobtracker.job_application_tracker.service.CustomUserDetailsService;
 import com.jobtracker.job_application_tracker.service.UsersService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -41,9 +38,11 @@ public class AuthController {
     UsersService usersService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody Users users){
+    public ResponseEntity<?> registerUser(@Valid @RequestBody Users users){
+        if (users.getRole() == null || (!users.getRole().equals(Role.ROLE_ADMIN) && !users.getRole().equals(Role.ROLE_USER))) {
+            users.setRole(Role.ROLE_USER); // Default to ROLE_USER if no role is provided
+        }// Default Role Assigned
         usersService.register(users);
-
         return ResponseEntity.ok("User registered successfully!");
     }
 
@@ -55,7 +54,10 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
         );
 
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
+        //Setting the authentication object explicitly in securitycontextholder.
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // Generate  JWT after successfull authentication
         String jwt = jwtUtils.generateToken(authRequest.getUsername());
 
         return ResponseEntity.ok(new AuthResponse(jwt));

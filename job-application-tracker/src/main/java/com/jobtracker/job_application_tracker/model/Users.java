@@ -1,9 +1,10 @@
 package com.jobtracker.job_application_tracker.model;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import lombok.*;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -16,12 +17,25 @@ public class Users {
     @Column(nullable = false, unique = true)
     private String username;
 
-//    @JsonIgnore
+    //    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING) //Stores role as a String in the DB.
     @Column(nullable = false)
-    private String role;
+    private Role role;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL) // One user has many applications
+    @JsonBackReference
+    private List<JobApplication> jobApplications = new ArrayList<>();
+
+    public List<JobApplication> getJobApplications() {
+        return jobApplications;
+    }
+
+    public void setJobApplications(List<JobApplication> jobApplications) {
+        this.jobApplications = jobApplications;
+    }
 
     public Long getId() {
         return id;
@@ -47,11 +61,11 @@ public class Users {
         this.password = password;
     }
 
-    public String getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 }
