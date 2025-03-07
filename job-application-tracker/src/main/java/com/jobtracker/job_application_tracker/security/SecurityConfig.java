@@ -8,14 +8,13 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
@@ -36,11 +35,18 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtRequestFilter jwtRequestFilter) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/**").permitAll() // Allow public access for login.register
-                        .requestMatchers(HttpMethod.GET, "/api/applications").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN") // Users can view their applications
-                        .requestMatchers(HttpMethod.POST, "/api/applications").hasAuthority("ROLE_USER") // Users can create
-                        .requestMatchers(HttpMethod.PUT, "/api/applications/**").hasAuthority("ROLE_USER") // Users can update their own
-                        .requestMatchers(HttpMethod.DELETE, "/api/applications/**").hasAuthority("ROLE_USER") // Users can delete their own
+                        // public access for authentication end points
+                        .requestMatchers("/api/auth/**").permitAll()
+
+                        //User permissions
+                        .requestMatchers(HttpMethod.GET, "/api/applications").hasAuthority("ROLE_USER")
+                        .requestMatchers(HttpMethod.POST, "/api/applications").hasAuthority("ROLE_USER")
+                        .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/withdraw").hasAuthority("ROLE_USER") // User can withdraw his application by updating his status.
+                        .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/edit").hasAuthority("ROLE_USER") //  Allow users to edit their applications except status
+
+                        // Admin Permissions
+                        .requestMatchers(HttpMethod.GET, "/api/admin/applications").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/status").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")  // Admins can access admin APIs
                         .anyRequest().authenticated() // Require authentication for all other requests
                 )

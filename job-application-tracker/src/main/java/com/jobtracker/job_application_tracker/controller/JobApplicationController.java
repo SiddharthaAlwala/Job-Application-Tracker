@@ -1,4 +1,6 @@
 package com.jobtracker.job_application_tracker.controller;
+
+import com.jobtracker.job_application_tracker.model.ApplicationStatus;
 import com.jobtracker.job_application_tracker.model.JobApplication;
 import com.jobtracker.job_application_tracker.service.JobApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.Map;
 
@@ -19,11 +22,12 @@ public class JobApplicationController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    public ResponseEntity<List<JobApplication>> getAllApplications(Authentication authentication){
+    public ResponseEntity<List<JobApplication>> getAllApplications(Authentication authentication) {
         String username = authentication.getName();
         return ResponseEntity.ok(jobApplicationService.getAllApplications(username));
 
     }
+
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_USER')")
     public ResponseEntity<JobApplication> createApplication(Authentication authentication, @RequestBody JobApplication jobApplication) {
@@ -48,11 +52,34 @@ public class JobApplicationController {
     public ResponseEntity<?> deleteApplication(Authentication authentication, @PathVariable Long id) {
         String username = authentication.getName();
         try {
-            jobApplicationService.deleteApplication(username,id);
+            jobApplicationService.deleteApplication(username, id);
             return ResponseEntity.ok(Map.of("message", "Job Application deleted successfully"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PutMapping("/{id}/withdraw")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    public ResponseEntity<JobApplication> withdrawApplication(Authentication authentication, @PathVariable Long id) {
+        String username = authentication.getName();
+        return ResponseEntity.ok(jobApplicationService.withDrawnApplication(username, id));
+    }
+
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<JobApplication> updateApplicationStatus(Authentication authentication, @PathVariable Long id, @RequestBody Map<String, String> statusMap) {
+        String adminUsername = authentication.getName();
+        ApplicationStatus newStatus = ApplicationStatus.valueOf(statusMap.get("status"));
+        return ResponseEntity.ok(jobApplicationService.updateJobApplicationStatus(id, newStatus, adminUsername));
+    }
+
+    @PutMapping("/{id}/edit")
+    @PreAuthorize("hasAuthority('ROLE_USER)")
+    public ResponseEntity<JobApplication> editApplication(Authentication authentication, @PathVariable Long id, @RequestBody JobApplication updatedApplication) {
+        String username = authentication.getName();
+        return ResponseEntity.ok(jobApplicationService.editApplication(username, id, updatedApplication));
+    }
+
 
 }

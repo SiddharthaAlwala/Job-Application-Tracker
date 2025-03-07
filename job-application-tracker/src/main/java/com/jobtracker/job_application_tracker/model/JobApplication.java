@@ -3,7 +3,8 @@ package com.jobtracker.job_application_tracker.model;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -24,7 +25,8 @@ public class JobApplication {
     private String jobTitle;
 
     @Column(nullable = false)
-    private String status; // e.g., "Applied", "Interviewed", "Rejected", "Accepted"
+    @Enumerated(EnumType.STRING)
+    private ApplicationStatus status; // e.g., "Applied", "Interviewed", "Rejected", "Accepted"
 
     @Column(length = 2000)
     private String jobDescription;
@@ -56,6 +58,7 @@ public class JobApplication {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        this.status = ApplicationStatus.APPLIED; //Default status
     }
 
     @PreUpdate
@@ -87,11 +90,12 @@ public class JobApplication {
         this.jobTitle = jobTitle;
     }
 
-    public String getStatus() {
+    
+    public ApplicationStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(ApplicationStatus status) {
         this.status = status;
     }
 
