@@ -38,14 +38,16 @@ public class SecurityConfig {
                         // public access for authentication end points
                         .requestMatchers("/api/auth/**").permitAll()
 
+                        // Allow both user and admin to get applications
+                        .requestMatchers(HttpMethod.GET, "/api/applications").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
+
                         //User permissions
-                        .requestMatchers(HttpMethod.GET, "/api/applications").hasAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.POST, "/api/applications").hasAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/withdraw").hasAuthority("ROLE_USER") // User can withdraw his application by updating his status.
                         .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/edit").hasAuthority("ROLE_USER") //  Allow users to edit their applications except status
 
                         // Admin Permissions
-                        .requestMatchers(HttpMethod.GET, "/api/admin/applications").hasAuthority("ROLE_ADMIN")
+
                         .requestMatchers(HttpMethod.PUT, "/api/applications/{id}/status").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")  // Admins can access admin APIs
                         .anyRequest().authenticated() // Require authentication for all other requests

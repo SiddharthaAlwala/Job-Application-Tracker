@@ -20,23 +20,25 @@ public class JobApplicationService {
     @Autowired
     private UsersRepository usersRepository;
 
+    //  Allow admins to view all job applications, and users can view only their applications
     public List<JobApplication> getAllApplications(String username) {
-        Users users = usersRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
+        Users users = usersRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("Admin not found"));
         if (users.getRole() == Role.ROLE_ADMIN) {
             return jobApplicationRepository.findAll(); // Admin can see all applications.
         } else {
-            return jobApplicationRepository.findByUser(users);
+            return jobApplicationRepository.findByUser(users); // users can see their own applications
         }
     }
 
+    // logic for user can create their application
     public JobApplication createApplication(String username, JobApplication jobApplication) {
         Users users = usersRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found exception"));
         jobApplication.setUser(users); // Assosiate the application with the user.
-        jobApplication.setStatus(ApplicationStatus.APPLIED);
+        jobApplication.setStatus(ApplicationStatus.APPLIED); // Default status
         return jobApplicationRepository.save(jobApplication);
     }
 
-    // Users can only withdrawn application
+    // Users can only withdraw their own application
     public JobApplication withDrawnApplication(String username, Long id) {
         JobApplication application = jobApplicationRepository.findById(id).orElseThrow(() -> new RuntimeException("Job Application not Found"));
         if (!application.getUser().getUsername().equals(username)) {
@@ -45,33 +47,7 @@ public class JobApplicationService {
         application.setStatus(ApplicationStatus.WITHDRAWN);
         return jobApplicationRepository.save(application);
     }
-
-    public JobApplication updateApplication(String username, Long id, JobApplication jobApplication) {
-        // Checking if the job application exists
-        JobApplication existingApplication = jobApplicationRepository.findById(id).orElseThrow(() -> new RuntimeException("Job Application Not Found"));
-
-        if (!existingApplication.getUser().getUsername().equals(username)) {
-            throw new RuntimeException("You are not authorized to update this application");
-        }
-
-        //update fields (except createdAt)
-        existingApplication.setCompanyName(jobApplication.getCompanyName());
-        existingApplication.setJobTitle(jobApplication.getJobTitle());
-        existingApplication.setJobDescription(jobApplication.getJobDescription());
-        existingApplication.setStatus(jobApplication.getStatus());
-        existingApplication.setResumeLink(jobApplication.getResumeLink());
-
-        return jobApplicationRepository.save(existingApplication);
-    }
-
-    public void deleteApplication(String username, Long id) {
-
-        JobApplication jobApplication = jobApplicationRepository.findById(id).orElseThrow(() -> new RuntimeException("Job Application not found"));
-        if (!jobApplication.getUser().getUsername().equals(username)) {
-            throw new RuntimeException("You are not authorized to delete");
-        }
-        jobApplicationRepository.deleteById(id);
-    }
+    
 
     // Only admins can Update Application status.
     public JobApplication updateJobApplicationStatus(Long id, ApplicationStatus newStatus, String adminUsername) {
@@ -85,6 +61,7 @@ public class JobApplicationService {
         return jobApplicationRepository.save(application);
     }
 
+    // Users can only edit their own applications(Except status)
     public JobApplication editApplication(String username, Long id, JobApplication updatedApplication) {
         JobApplication existingApplication = jobApplicationRepository.findById(id).orElseThrow(() -> new RuntimeException("Job Application not found"));
         // Check if the logged in user own this application

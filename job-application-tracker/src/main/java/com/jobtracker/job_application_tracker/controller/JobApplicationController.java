@@ -19,15 +19,16 @@ public class JobApplicationController {
     @Autowired
     private JobApplicationService jobApplicationService;
 
-
+    // Admin can see all the applications
     @GetMapping
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<List<JobApplication>> getAllApplications(Authentication authentication) {
         String username = authentication.getName();
         return ResponseEntity.ok(jobApplicationService.getAllApplications(username));
 
     }
 
+    //Users can create their application
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_USER')")
     public ResponseEntity<JobApplication> createApplication(Authentication authentication, @RequestBody JobApplication jobApplication) {
@@ -35,30 +36,7 @@ public class JobApplicationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(jobApplicationService.createApplication(username, jobApplication));
     }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_USER')")
-    public ResponseEntity<?> updateApplication(Authentication authentication, @PathVariable Long id, @RequestBody JobApplication jobApplication) {
-        String username = authentication.getName();
-        try {
-            JobApplication updatedApplication = jobApplicationService.updateApplication(username, id, jobApplication);
-            return ResponseEntity.ok(updatedApplication);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_USER')")
-    public ResponseEntity<?> deleteApplication(Authentication authentication, @PathVariable Long id) {
-        String username = authentication.getName();
-        try {
-            jobApplicationService.deleteApplication(username, id);
-            return ResponseEntity.ok(Map.of("message", "Job Application deleted successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
-        }
-    }
-
+    //Users can withdraw their own application
     @PutMapping("/{id}/withdraw")
     @PreAuthorize("hasAuthority('ROLE_USER')")
     public ResponseEntity<JobApplication> withdrawApplication(Authentication authentication, @PathVariable Long id) {
@@ -66,6 +44,8 @@ public class JobApplicationController {
         return ResponseEntity.ok(jobApplicationService.withDrawnApplication(username, id));
     }
 
+
+    // Admin can change the status of the application except "APPLIED and WITHDRAWN"
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<JobApplication> updateApplicationStatus(Authentication authentication, @PathVariable Long id, @RequestBody Map<String, String> statusMap) {
@@ -74,6 +54,7 @@ public class JobApplicationController {
         return ResponseEntity.ok(jobApplicationService.updateJobApplicationStatus(id, newStatus, adminUsername));
     }
 
+    // User can edit his application except except status.
     @PutMapping("/{id}/edit")
     @PreAuthorize("hasAuthority('ROLE_USER)")
     public ResponseEntity<JobApplication> editApplication(Authentication authentication, @PathVariable Long id, @RequestBody JobApplication updatedApplication) {

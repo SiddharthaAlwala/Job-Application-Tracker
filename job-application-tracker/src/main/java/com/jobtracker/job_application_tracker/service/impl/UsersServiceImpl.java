@@ -19,6 +19,11 @@ public class UsersServiceImpl implements UsersService {
     @Override
     public void register(Users users) {
 
+        // Check if username already exists
+        if (usersRepository.findByUsername(users.getUsername()).isPresent()) {
+            throw new RuntimeException("User already exists with username: " + users.getUsername());
+        }
+
         users.setPassword(bCryptPasswordEncoder.encode(users.getPassword()));
         // Default role for new users
         if (users.getRole() == null) {
