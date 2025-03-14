@@ -19,6 +19,11 @@ public class UsersServiceImpl implements UsersService {
     @Override
     public void register(Users users) {
 
+        // Check if email already exists
+        if (usersRepository.findByEmail(users.getEmail()).isPresent()) {
+            throw new RuntimeException("User already exists with email: " + users.getEmail());
+        }
+
         // Check if username already exists
         if (usersRepository.findByUsername(users.getUsername()).isPresent()) {
             throw new RuntimeException("User already exists with username: " + users.getUsername());

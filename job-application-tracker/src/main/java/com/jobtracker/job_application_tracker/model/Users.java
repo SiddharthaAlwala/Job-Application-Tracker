@@ -15,6 +15,9 @@ public class Users {
     private Long id;
 
     @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false, unique = true)
     private String username;
 
     //    @JsonIgnore
@@ -24,6 +27,7 @@ public class Users {
     @Enumerated(EnumType.STRING) //Stores role as a String in the DB.
     @Column(nullable = false)
     private Role role;
+
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL) // One user has many applications
     @JsonBackReference
@@ -43,6 +47,14 @@ public class Users {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getUsername() {

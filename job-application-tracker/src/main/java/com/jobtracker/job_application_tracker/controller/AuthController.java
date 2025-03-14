@@ -2,9 +2,9 @@ package com.jobtracker.job_application_tracker.controller;
 
 import com.jobtracker.job_application_tracker.dto.AuthRequest;
 import com.jobtracker.job_application_tracker.dto.AuthResponse;
+import com.jobtracker.job_application_tracker.dto.RegisterRequest;
 import com.jobtracker.job_application_tracker.model.Role;
 import com.jobtracker.job_application_tracker.model.Users;
-import com.jobtracker.job_application_tracker.repository.UsersRepository;
 import com.jobtracker.job_application_tracker.security.JwtUtils;
 import com.jobtracker.job_application_tracker.service.CustomUserDetailsService;
 import com.jobtracker.job_application_tracker.service.UsersService;
@@ -32,25 +32,29 @@ public class AuthController {
     private JwtUtils jwtUtils;
 
     @Autowired
-    private UsersRepository usersRepository;
-
-    @Autowired
     private CustomUserDetailsService userDetailsService;
 
     @Autowired
     UsersService usersService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody Users users) {
-        try {
-            if (users.getRole() == null || (!users.getRole().equals(Role.ROLE_ADMIN) && !users.getRole().equals(Role.ROLE_USER))) {
-                users.setRole(Role.ROLE_USER); // Default to ROLE_USER if no role is provided
-            }// Default Role Assigned
-            usersService.register(users);
-            return ResponseEntity.ok("User registered successfully!");
-        } catch (RuntimeException e) {
-            return ResponseEntity.ok("Usrename already exists with given username: " + users.getUsername()); //Return error message if user exists
+    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
+        Users newUser = new Users();
+        newUser.setEmail(registerRequest.getEmail());
+        newUser.setUsername(registerRequest.getUsername());
+        newUser.setPassword(registerRequest.getPassword());
+        //Set Role
+        if (registerRequest.getRole() == null || registerRequest.getRole().isBlank()) {
+            newUser.setRole(Role.ROLE_USER); // Default role
+        } else {
+            try {
+                newUser.setRole(Role.valueOf("ROLE_" + registerRequest.getRole().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body("Invalid role. Allowed:ADMIN, USER");
+            }
         }
+        usersService.register(newUser);
+        return ResponseEntity.ok("User Registered Successfully!");
     }
 
     //    @CrossOrigin(origins = "http://localhost:3000")
